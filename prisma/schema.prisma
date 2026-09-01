@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ExpectationStatus {
+  ON_TRACK
+  AT_RISK
+  OFF_TRACK
+}
+
+enum UpdateType {
+  PROGRESS
+  BLOCKER
+  SUPPORT_REQUEST
+  MILESTONE
+}
+
+model Organization {
+  id           String        @id @default(cuid())
+  name         String
+  employees    Employee[]
+  expectations Expectation[]
+  createdAt    DateTime      @default(now())
+}
+
+model Employee {
+  id             String        @id @default(cuid())
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id])
+  name           String
+  role           String
+  level          String
+  managerId      String?
+  manager        Employee?     @relation("ManagerReports", fields: [managerId], references: [id])
+  reports        Employee[]    @relation("ManagerReports")
+  expectations   Expectation[]
+  updates        ExecutionUpdate[]
+  createdAt      DateTime      @default(now())
+}
+
+model Expectation {
+  id                  String            @id @default(cuid())
+  organizationId      String
+  organization        Organization      @relation(fields: [organizationId], references: [id])
+  ownerId             String
+  owner               Employee          @relation(fields: [ownerId], references: [id])
+  parentExpectationId String?
+  parent              Expectation?      @relation("ExpectationTree", fields: [parentExpectationId], references: [id])
+  children            Expectation[]     @relation("ExpectationTree")
+  title               String
+  metric              String
+  baseline             Float?
+  target               Float
+  current              Float?
+  weight               Float             @default(1)
+  deadline             DateTime
+  status               ExpectationStatus @default(ON_TRACK)
+  updates              ExecutionUpdate[]
+  createdAt            DateTime          @default(now())
+}
+
+model ExecutionUpdate {
+  id            String       @id @default(cuid())
+  employeeId    String
+  employee      Employee     @relation(fields: [employeeId], references: [id])
+  expectationId String
+  expectation   Expectation  @relation(fields: [expectationId], references: [id])
+  type          UpdateType
+  rawText       String
+  structured    Json?
+  createdAt     DateTime     @default(now())
+  evidences     Evidence[]
+}
+
+model Evidence {
+  id              String          @id @default(cuid())
+  executionUpdateId String
+  executionUpdate ExecutionUpdate @relation(fields: [executionUpdateId], references: [id])
+  source          String
+  fact            String
+  confidence      Float
+  sourceUrl       String?
+  sessionId       String?
+  replayUrl       String?
+  rawPayload      Json?
+  createdAt       DateTime        @default(now())
+}
+
+model Escalation {
+  id          String   @id @default(cuid())
+  title       String
+  severity    String
+  ownerId     String
+  rationale   String
+  proposedAction Json?
+  status      String   @default("OPEN")
+  createdAt   DateTime @default(now())
+}
