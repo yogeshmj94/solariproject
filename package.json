@@ -9,18 +9,19 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@solarisdk/browser": "latest",
     "@prisma/client": "latest",
+    "@solarisdk/browser": "latest",
+    "chromium-bidi": "^17.0.2",
     "next": "latest",
     "react": "latest",
     "react-dom": "latest",
     "zod": "latest"
   },
   "devDependencies": {
-    "prisma": "latest",
-    "typescript": "latest",
     "@types/node": "latest",
     "@types/react": "latest",
-    "@types/react-dom": "latest"
+    "@types/react-dom": "latest",
+    "prisma": "latest",
+    "typescript": "latest"
   }
 }
