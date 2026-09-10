@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import styles from "./feedback-form.module.css";
 
 const systemOptions = ["WMS", "CCTV / VMS", "Sorter system", "Email", "Other"];
 
@@ -62,20 +63,20 @@ export default function FeedbackForm({ investigationId }: { investigationId?: st
   }
 
   return (
-    <section className="card feedback-card">
+    <section className={`card ${styles.card}`}>
       <div className="kicker">Help shape the pilot</div>
       <h2>Could this help investigate lost or missorted shipments in your facility?</h2>
       <p className="muted small">Your answers help us understand what a real one-month facility integration would require.</p>
 
-      <form onSubmit={submit} className="feedback-form">
-        <div className="feedback-block">
+      <form onSubmit={submit} className={styles.form}>
+        <div className={styles.block}>
           <label className="field-label">Would this workflow be useful?</label>
-          <div className="choice-row">
+          <div className={styles.choices}>
             {(["YES", "MAYBE", "NO"] as Choice[]).map((choice) => (
               <button
                 type="button"
                 key={choice}
-                className={`choice-button ${usefulness === choice ? "selected" : ""}`}
+                className={`${styles.choice} ${usefulness === choice ? styles.choiceSelected : ""}`}
                 onClick={() => setUsefulness(choice)}
               >
                 {choice === "YES" ? "Yes" : choice === "MAYBE" ? "Maybe" : "No"}
@@ -84,14 +85,14 @@ export default function FeedbackForm({ investigationId }: { investigationId?: st
           </div>
         </div>
 
-        <div className="feedback-block">
+        <div className={styles.block}>
           <label className="field-label">What would we need to connect?</label>
-          <div className="choice-row wrap">
+          <div className={styles.choices}>
             {systemOptions.map((system) => (
               <button
                 type="button"
                 key={system}
-                className={`choice-button ${systems.includes(system) ? "selected" : ""}`}
+                className={`${styles.choice} ${systems.includes(system) ? styles.choiceSelected : ""}`}
                 onClick={() => toggleSystem(system)}
               >
                 {system}
@@ -106,14 +107,14 @@ export default function FeedbackForm({ investigationId }: { investigationId?: st
         <label className="field-label" htmlFor="comments">Anything else we should know?</label>
         <textarea id="comments" value={comments} onChange={(event) => setComments(event.target.value)} placeholder="What would make this genuinely useful for your operation?" />
 
-        <div className="feedback-block">
+        <div className={styles.block}>
           <label className="field-label">Would you consider a facility pilot?</label>
-          <div className="choice-row">
+          <div className={styles.choices}>
             {(["YES", "MAYBE", "NO"] as Choice[]).map((choice) => (
               <button
                 type="button"
                 key={choice}
-                className={`choice-button ${pilotInterest === choice ? "selected" : ""}`}
+                className={`${styles.choice} ${pilotInterest === choice ? styles.choiceSelected : ""}`}
                 onClick={() => setPilotInterest(choice)}
               >
                 {choice === "YES" ? "Yes" : choice === "MAYBE" ? "Maybe" : "No"}
@@ -123,14 +124,14 @@ export default function FeedbackForm({ investigationId }: { investigationId?: st
         </div>
 
         {(pilotInterest === "YES" || pilotInterest === "MAYBE") && (
-          <div className="pilot-fields">
+          <div className={styles.pilotFields}>
             <input value={company} onChange={(event) => setCompany(event.target.value)} placeholder="Company (optional)" />
             <input value={facility} onChange={(event) => setFacility(event.target.value)} placeholder="Facility / city (optional)" />
             <input value={workEmail} onChange={(event) => setWorkEmail(event.target.value)} placeholder="Work email (optional)" type="email" />
           </div>
         )}
 
-        <div className="feedback-submit-row">
+        <div className={styles.submitRow}>
           <button type="submit" disabled={saving}>{saving ? "Sending…" : "Send feedback"}</button>
           {saved && <span className="ok">Thanks — feedback saved.</span>}
           {error && <span className="risk">{error}</span>}
