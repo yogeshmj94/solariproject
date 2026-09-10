@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum ExpectationStatus {
@@ -114,14 +115,14 @@ model DemoUser {
 }
 
 model InvestigationCase {
-  id             String   @id
+  id             String    @id
   waybill        String
   status         String
   facility       String
   lastScan       Json
   visualEvidence Json
   sessionId      String
-  createdAt      DateTime @default(now())
+  createdAt      DateTime  @default(now())
   userId         String?
   user           DemoUser? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
@@ -131,19 +132,19 @@ model InvestigationCase {
 }
 
 model ProductFeedback {
-  id             String   @id @default(cuid())
-  usefulness     String
-  systems        String[]
-  obstacle       String?
-  comments       String?
-  pilotInterest  String
-  company        String?
-  facility       String?
-  workEmail      String?
+  id              String   @id @default(cuid())
+  usefulness      String
+  systems         String[]
+  obstacle        String?
+  comments        String?
+  pilotInterest   String
+  company         String?
+  facility        String?
+  workEmail       String?
   investigationId String?
-  createdAt      DateTime @default(now())
-  userId         String
-  user           DemoUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+  userId          String
+  user            DemoUser @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([createdAt])
   @@index([userId])
