@@ -1,9 +1,10 @@
 import { signIn } from "@/auth";
+import styles from "./page.module.css";
 
 export default function SignInPage() {
   return (
-    <main className="signin-shell">
-      <section className="signin-card">
+    <main className={styles.shell}>
+      <section className={styles.card}>
         <div className="kicker">Sort-center shipment recovery demo</div>
         <h1>Trace a shipment from WMS scan to CCTV evidence.</h1>
         <p className="muted">
@@ -16,10 +17,10 @@ export default function SignInPage() {
             await signIn("google", { redirectTo: "/investigations" });
           }}
         >
-          <button className="google-signin" type="submit">Continue with Google</button>
+          <button className={styles.signin} type="submit">Continue with Google</button>
         </form>
 
-        <div className="signin-note">
+        <div className={styles.note}>
           <strong>Demo flow</strong>
           <span>AWB → WMS last scan → relevant CCTV → evidence-backed finding</span>
         </div>
