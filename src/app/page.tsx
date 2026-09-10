@@ -92,7 +92,10 @@ export default function Home() {
           <div className="brand">ExecutionOS · Sort Center</div>
           <div className="muted small">Operational truth for sortation, throughput and shipment recovery.</div>
         </div>
-        <div className="badge">Solari operations prototype</div>
+        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
+          <a href="/investigations"><button className="secondary">Shipment investigation</button></a>
+          <div className="badge">Solari operations prototype</div>
+        </div>
       </div>
 
       <section className="hero">
