@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import FeedbackForm from "./feedback-form";
 
 type Investigation = {
   caseId: string;
@@ -116,7 +117,10 @@ export default function InvestigationsPage() {
           <a className="brand" href="/">ExecutionOS · Sort Center</a>
           <div className="muted small">Shipment recovery console for sort-center managers.</div>
         </div>
-        <div className="badge">Solari investigation</div>
+        <div className="demo-badges">
+          <div className="badge">Solari investigation</div>
+          <div className="badge demo-badge">Demo facility · synthetic data</div>
+        </div>
       </div>
 
       <section className="investigation-hero">
@@ -181,75 +185,79 @@ export default function InvestigationsPage() {
       )}
 
       {result && (
-        <div className="investigation-grid">
-          <section className="card investigation-summary">
-            <div className="section-header">
-              <div>
-                <div className="kicker">Case {result.caseId}</div>
-                <h2>AWB {result.waybill}</h2>
+        <>
+          <div className="investigation-grid">
+            <section className="card investigation-summary">
+              <div className="section-header">
+                <div>
+                  <div className="kicker">Case {result.caseId}</div>
+                  <h2>AWB {result.waybill}</h2>
+                </div>
+                <span className={`status-pill ${statusClass(result.status)}`}>{statusLabel(result.status)}</span>
               </div>
-              <span className={`status-pill ${statusClass(result.status)}`}>{statusLabel(result.status)}</span>
-            </div>
 
-            <div className="finding-banner">
-              <span className="finding-icon">✓</span>
-              <div>
-                <div className="small muted">Last verified finding</div>
+              <div className="finding-banner">
+                <span className="finding-icon">✓</span>
+                <div>
+                  <div className="small muted">Last verified finding</div>
+                  <strong>{result.visualEvidence.area}</strong>
+                  <p>{result.visualEvidence.observation}</p>
+                </div>
+              </div>
+
+              <div className="detail-grid">
+                <div><span>Facility</span><strong>{result.facility}</strong></div>
+                <div><span>Confidence</span><strong>{Math.round(result.visualEvidence.confidence * 100)}%</strong></div>
+                <div><span>Last verified</span><strong>{result.visualEvidence.time}</strong></div>
+                <div><span>CCTV camera</span><strong>{result.visualEvidence.camera}</strong></div>
+              </div>
+            </section>
+
+            <section className="card evidence-image-card">
+              <div className="section-header">
+                <div>
+                  <div className="kicker">Visual evidence</div>
+                  <h2>{result.visualEvidence.camera}</h2>
+                </div>
+                <span className="confidence-badge">{Math.round(result.visualEvidence.confidence * 100)}% match</span>
+              </div>
+              <img className="evidence-image" src={result.visualEvidence.imageUrl} alt={`CCTV evidence for ${result.waybill}`} />
+              <div className="image-caption">
                 <strong>{result.visualEvidence.area}</strong>
-                <p>{result.visualEvidence.observation}</p>
+                <span>{result.visualEvidence.time}</span>
               </div>
-            </div>
+            </section>
 
-            <div className="detail-grid">
-              <div><span>Facility</span><strong>{result.facility}</strong></div>
-              <div><span>Confidence</span><strong>{Math.round(result.visualEvidence.confidence * 100)}%</strong></div>
-              <div><span>Last verified</span><strong>{result.visualEvidence.time}</strong></div>
-              <div><span>CCTV camera</span><strong>{result.visualEvidence.camera}</strong></div>
-            </div>
-          </section>
-
-          <section className="card evidence-image-card">
-            <div className="section-header">
-              <div>
-                <div className="kicker">Visual evidence</div>
-                <h2>{result.visualEvidence.camera}</h2>
+            <section className="card">
+              <div className="kicker">WMS evidence</div>
+              <h2>Last recorded scan</h2>
+              <div className="timeline-row">
+                <span className="timeline-dot" />
+                <div>
+                  <strong>{result.lastScan.area}</strong>
+                  <p className="muted">{result.lastScan.time}</p>
+                </div>
               </div>
-              <span className="confidence-badge">{Math.round(result.visualEvidence.confidence * 100)}% match</span>
-            </div>
-            <img className="evidence-image" src={result.visualEvidence.imageUrl} alt={`CCTV evidence for ${result.waybill}`} />
-            <div className="image-caption">
-              <strong>{result.visualEvidence.area}</strong>
-              <span>{result.visualEvidence.time}</span>
-            </div>
-          </section>
-
-          <section className="card">
-            <div className="kicker">WMS evidence</div>
-            <h2>Last recorded scan</h2>
-            <div className="timeline-row">
-              <span className="timeline-dot" />
-              <div>
-                <strong>{result.lastScan.area}</strong>
-                <p className="muted">{result.lastScan.time}</p>
+              <div className="detail-grid compact">
+                <div><span>Operator</span><strong>{result.lastScan.operator}</strong></div>
+                <div><span>Mapped camera</span><strong>{result.lastScan.camera}</strong></div>
               </div>
-            </div>
-            <div className="detail-grid compact">
-              <div><span>Operator</span><strong>{result.lastScan.operator}</strong></div>
-              <div><span>Mapped camera</span><strong>{result.lastScan.camera}</strong></div>
-            </div>
-          </section>
+            </section>
 
-          <section className="card">
-            <div className="kicker">Investigation path</div>
-            <h2>Evidence chain</h2>
-            <div className="evidence-chain">
-              <div><span>1</span><div><strong>AWB received</strong><small>{result.waybill}</small></div></div>
-              <div><span>2</span><div><strong>WMS scan verified</strong><small>{result.lastScan.area}</small></div></div>
-              <div><span>3</span><div><strong>CCTV evidence verified</strong><small>{result.visualEvidence.area}</small></div></div>
-            </div>
-            <div className="session-meta">Solari audit session · {result.sessionId}</div>
-          </section>
-        </div>
+            <section className="card">
+              <div className="kicker">Investigation path</div>
+              <h2>Evidence chain</h2>
+              <div className="evidence-chain">
+                <div><span>1</span><div><strong>AWB received</strong><small>{result.waybill}</small></div></div>
+                <div><span>2</span><div><strong>WMS scan verified</strong><small>{result.lastScan.area}</small></div></div>
+                <div><span>3</span><div><strong>CCTV evidence verified</strong><small>{result.visualEvidence.area}</small></div></div>
+              </div>
+              <div className="session-meta">Solari audit session · {result.sessionId}</div>
+            </section>
+          </div>
+
+          <FeedbackForm investigationId={result.caseId} />
+        </>
       )}
 
       <section className="card history-card">
