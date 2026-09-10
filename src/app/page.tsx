@@ -6,10 +6,9 @@ import { getLineage } from "@/lib/lineage";
 
 type Analysis = {
   type: string;
-  order: string;
-  machine: string;
-  part: string;
-  estimatedImpactUnits: number;
+  wave: string;
+  feedline: string;
+  estimatedImpactShipments: number;
   summary: string;
   managementImpact: string;
 };
@@ -17,9 +16,9 @@ type Analysis = {
 type Verification = {
   verified: boolean;
   facts?: {
-    orderStatus: string;
-    maintenanceTicket: string;
-    partAvailableQty: number;
+    waveStatus: string;
+    jarvisTicket: string;
+    projectedShipmentLoss: number;
   };
   sessionId?: string;
   replayUrl?: string | null;
@@ -27,7 +26,7 @@ type Verification = {
 };
 
 const demoUpdate =
-  "Machine 4 stopped at 11:20. Production order 1421 will be delayed and we may lose around 60 units.";
+  "Feedline 5 went down at 11:20 during BLR-AM-05. JARVIS ticket raised and we may miss around 1,420 shipments in the wave.";
 
 export default function Home() {
   const company = expectations[0];
@@ -43,9 +42,9 @@ export default function Home() {
   const evidence = useMemo(() => {
     if (!verification?.facts) return [];
     return [
-      `ERP · Order ${analysis?.order ?? "1421"} status = ${verification.facts.orderStatus}`,
-      `Maintenance · Machine ${analysis?.machine ?? "4"} ticket = ${verification.facts.maintenanceTicket}`,
-      `Inventory · ${analysis?.part ?? "BR-204"} available quantity = ${verification.facts.partAvailableQty}`,
+      `SortOps · Wave ${analysis?.wave ?? "BLR-AM-05"} status = ${verification.facts.waveStatus}`,
+      `JARVIS · Feedline ${analysis?.feedline ?? "5"} ticket = ${verification.facts.jarvisTicket}`,
+      `Throughput · Projected shipment loss = ${verification.facts.projectedShipmentLoss.toLocaleString()} shipments`,
     ];
   }, [analysis, verification]);
 
@@ -69,9 +68,8 @@ export default function Home() {
       setPhase("verifying");
 
       const params = new URLSearchParams({
-        order: parsed.order || "1421",
-        machine: parsed.machine || "4",
-        part: parsed.part || "BR-204",
+        wave: parsed.wave || "BLR-AM-05",
+        feedline: parsed.feedline || "5",
       });
       const verifyResponse = await fetch(`/api/solari/verify?${params.toString()}`);
       const verifyPayload = (await verifyResponse.json()) as Verification;
@@ -91,18 +89,18 @@ export default function Home() {
     <main>
       <div className="topbar">
         <div>
-          <div className="brand">ExecutionOS</div>
-          <div className="muted small">Operational truth, traced to company outcomes.</div>
+          <div className="brand">ExecutionOS · Sort Center</div>
+          <div className="muted small">Operational truth for sortation, throughput and shipment recovery.</div>
         </div>
-        <div className="badge">Solari challenge prototype</div>
+        <div className="badge">Solari operations prototype</div>
       </div>
 
       <section className="hero">
         <div>
-          <div className="kicker">Company objective</div>
+          <div className="kicker">Regional operations objective</div>
           <h1>{company.title}</h1>
           <p className="muted hero-copy">
-            Turn frontline updates into verified operational evidence, then show management exactly what is at risk and why.
+            Turn frontline sort-center updates into verified operational evidence, then show management the throughput and shipment impact.
           </p>
         </div>
         <div className="hero-metric">
@@ -118,14 +116,14 @@ export default function Home() {
 
       <div className="grid">
         <section className="card span-7">
-          <div className="kicker">Operator A · Line 3 · Shift B</div>
+          <div className="kicker">Feedline 5 · BLR Sort Center · Shift A</div>
           <h2>{operator.title}</h2>
           <div className="operator-progress">
             <div>
-              <div className="metric">{operator.current} / {operator.target}</div>
-              <span className="muted">units completed</span>
+              <div className="metric">{operator.current?.toLocaleString()} / {operator.target.toLocaleString()}</div>
+              <span className="muted">shipments processed</span>
             </div>
-            <span className="status-pill danger">60 units at risk</span>
+            <span className="status-pill danger">1,420 shipments at risk</span>
           </div>
           <div className="progress"><div style={{ width: `${((operator.current ?? 0) / operator.target) * 100}%` }} /></div>
 
@@ -135,25 +133,25 @@ export default function Home() {
             <button onClick={reportBlocker} disabled={phase === "reasoning" || phase === "verifying" || !update.trim()}>
               {phase === "reasoning" ? "Gemini is interpreting…" : phase === "verifying" ? "Solari is verifying…" : "Investigate blocker"}
             </button>
-            <span className="muted small">AI interpretation is kept separate from verified facts.</span>
+            <span className="muted small">AI interpretation is kept separate from verified operational facts.</span>
           </div>
           {error && <div className="error-box">{error}</div>}
         </section>
 
         <section className="card span-5 evidence-card">
-          <div className="kicker">Evidence-backed blocker</div>
+          <div className="kicker">Evidence-backed sortation blocker</div>
           {phase === "idle" && (
             <div className="empty-state">
               <div className="pulse-dot" />
               <h2>Waiting for a frontline signal</h2>
-              <p className="muted">ExecutionOS will interpret the update, ask Solari to inspect the legacy ERP, and attach the facts here.</p>
+              <p className="muted">ExecutionOS will interpret the update, ask Solari to inspect SortOps/JARVIS, and attach the verified facts here.</p>
             </div>
           )}
           {(phase === "reasoning" || phase === "verifying") && (
             <div className="empty-state">
               <div className="spinner" />
-              <h2>{phase === "reasoning" ? "Understanding the blocker" : "Checking operational systems"}</h2>
-              <p className="muted">{phase === "reasoning" ? "Gemini is structuring the employee report." : "Solari is navigating the mock ERP independently."}</p>
+              <h2>{phase === "reasoning" ? "Understanding the blocker" : "Checking sort-center systems"}</h2>
+              <p className="muted">{phase === "reasoning" ? "Gemini is structuring the frontline report." : "Solari is navigating the mock SortOps console independently."}</p>
             </div>
           )}
           {analysis && phase !== "idle" && (
@@ -161,7 +159,7 @@ export default function Home() {
               <div className="section-label">AI interpretation</div>
               <h2>{analysis.summary}</h2>
               <div className="chips">
-                <span>Order {analysis.order}</span><span>Machine {analysis.machine}</span><span>Investigate {analysis.part}</span>
+                <span>Wave {analysis.wave}</span><span>Feedline {analysis.feedline}</span><span>{analysis.estimatedImpactShipments.toLocaleString()} shipments at risk</span>
               </div>
               <p className="muted">{analysis.managementImpact}</p>
             </div>
@@ -178,8 +176,8 @@ export default function Home() {
 
         <section className="card span-12">
           <div className="section-header">
-            <div><div className="kicker">Expectation lineage</div><h2>One blocker, visible all the way to the CEO</h2></div>
-            {phase === "done" && <span className="status-pill danger">Company objective impacted</span>}
+            <div><div className="kicker">Expectation lineage</div><h2>One feedline blocker, visible up to regional operations</h2></div>
+            {phase === "done" && <span className="status-pill danger">Sort-center objective impacted</span>}
           </div>
           <div className="lineage">
             {lineage.map((item, index) => (
@@ -193,7 +191,7 @@ export default function Home() {
 
         <section className="card span-8">
           <div className="kicker">Management view</div>
-          <h2>Risk propagation</h2>
+          <h2>Throughput risk propagation</h2>
           <table>
             <thead><tr><th>Owner</th><th>Expectation</th><th>Current</th><th>Status</th></tr></thead>
             <tbody>
@@ -210,9 +208,9 @@ export default function Home() {
 
         <section className="card span-4">
           <div className="kicker">Legacy evidence source</div>
-          <h2>Mock ERP</h2>
-          <p className="muted">No internal database shortcut. Solari navigates the legacy interface and reads the operational facts just like an employee would.</p>
-          <a href="/erp" target="_blank" rel="noreferrer"><button className="secondary">Open legacy ERP ↗</button></a>
+          <h2>SortOps + JARVIS mock</h2>
+          <p className="muted">No database shortcut. Solari navigates the legacy-style operations interface and reads wave, JARVIS and throughput facts like a manager would.</p>
+          <a href="/erp" target="_blank" rel="noreferrer"><button className="secondary">Open SortOps console ↗</button></a>
         </section>
       </div>
     </main>
