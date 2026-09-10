@@ -1,12 +1,13 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 type Investigation = {
   caseId: string;
   waybill: string;
   status: "AVAILABLE_INSIDE_FACILITY" | "LEFT_FACILITY" | "LAST_SEEN";
   facility: string;
+  createdAt?: string;
   lastScan: {
     area: string;
     time: string;
@@ -27,6 +28,7 @@ type Investigation = {
 type ApiResponse = {
   ok: boolean;
   investigation?: Investigation;
+  investigations?: Investigation[];
   error?: string;
 };
 
@@ -38,11 +40,41 @@ function statusLabel(status: Investigation["status"]) {
   return "Last seen";
 }
 
+function statusClass(status: Investigation["status"]) {
+  return status === "AVAILABLE_INSIDE_FACILITY" ? "success" : "danger";
+}
+
+function formatCreatedAt(value?: string) {
+  if (!value) return "Just now";
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
+}
+
 export default function InvestigationsPage() {
   const [waybill, setWaybill] = useState("771238945");
   const [result, setResult] = useState<Investigation | null>(null);
+  const [history, setHistory] = useState<Investigation[]>([]);
   const [loading, setLoading] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(true);
   const [error, setError] = useState("");
+
+  async function loadHistory() {
+    try {
+      const response = await fetch("/api/shipments/history", { cache: "no-store" });
+      const payload = (await response.json()) as ApiResponse;
+      if (response.ok && payload.ok && payload.investigations) {
+        setHistory(payload.investigations);
+      }
+    } finally {
+      setHistoryLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void loadHistory();
+  }, []);
 
   async function investigate(event?: FormEvent) {
     event?.preventDefault();
@@ -62,11 +94,19 @@ export default function InvestigationsPage() {
       }
 
       setResult(payload.investigation);
+      setHistory((current) => [payload.investigation!, ...current.filter((item) => item.caseId !== payload.investigation!.caseId)].slice(0, 50));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Shipment investigation failed");
     } finally {
       setLoading(false);
     }
+  }
+
+  function openCase(item: Investigation) {
+    setResult(item);
+    setWaybill(item.waybill);
+    setError("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   return (
@@ -148,9 +188,7 @@ export default function InvestigationsPage() {
                 <div className="kicker">Case {result.caseId}</div>
                 <h2>AWB {result.waybill}</h2>
               </div>
-              <span className={`status-pill ${result.status === "AVAILABLE_INSIDE_FACILITY" ? "success" : "danger"}`}>
-                {statusLabel(result.status)}
-              </span>
+              <span className={`status-pill ${statusClass(result.status)}`}>{statusLabel(result.status)}</span>
             </div>
 
             <div className="finding-banner">
@@ -213,6 +251,38 @@ export default function InvestigationsPage() {
           </section>
         </div>
       )}
+
+      <section className="card history-card">
+        <div className="section-header">
+          <div>
+            <div className="kicker">Case history</div>
+            <h2>Recent investigations</h2>
+          </div>
+          <span className="muted small">{history.length} stored case{history.length === 1 ? "" : "s"}</span>
+        </div>
+
+        {historyLoading ? (
+          <p className="muted">Loading investigation history…</p>
+        ) : history.length === 0 ? (
+          <p className="muted">No cases stored yet. Your next completed investigation will appear here.</p>
+        ) : (
+          <div className="history-list">
+            {history.map((item) => (
+              <button className="history-row" key={item.caseId} type="button" onClick={() => openCase(item)}>
+                <div className="history-primary">
+                  <strong>AWB {item.waybill}</strong>
+                  <span className="muted small">{item.caseId} · {formatCreatedAt(item.createdAt)}</span>
+                </div>
+                <div className="history-location">
+                  <strong>{item.visualEvidence.area}</strong>
+                  <span className="muted small">{item.visualEvidence.camera} · {Math.round(item.visualEvidence.confidence * 100)}% confidence</span>
+                </div>
+                <span className={`status-pill ${statusClass(item.status)}`}>{statusLabel(item.status)}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </section>
     </main>
   );
 }
