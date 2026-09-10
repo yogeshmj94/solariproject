@@ -1,4 +1,6 @@
-import { signIn } from "@/auth";
+"use client";
+
+import { signIn } from "next-auth/react";
 import styles from "./page.module.css";
 
 export default function SignInPage() {
@@ -11,14 +13,13 @@ export default function SignInPage() {
           This is a demonstrable prototype using simulated facility data. Sign in with Google to run the demo and leave deployment feedback.
         </p>
 
-        <form
-          action={async () => {
-            "use server";
-            await signIn("google", { redirectTo: "/investigations" });
-          }}
+        <button
+          className={styles.signin}
+          type="button"
+          onClick={() => signIn("google", { callbackUrl: "/investigations" })}
         >
-          <button className={styles.signin} type="submit">Continue with Google</button>
-        </form>
+          Continue with Google
+        </button>
 
         <div className={styles.note}>
           <strong>Demo flow</strong>
