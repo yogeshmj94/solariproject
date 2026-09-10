@@ -13,6 +13,7 @@
     "@solarisdk/browser": "latest",
     "chromium-bidi": "^17.0.2",
     "next": "latest",
+    "next-auth": "^5.0.0-beta.22",
     "react": "latest",
     "react-dom": "latest",
     "zod": "latest"
