@@ -1,37 +1,37 @@
-const orders = [
-  { order: "1421", line: "Line 3", qty: 420, completed: 360, status: "DELAYED" },
-  { order: "1419", line: "Line 2", qty: 500, completed: 500, status: "COMPLETE" },
-  { order: "1420", line: "Line 1", qty: 600, completed: 600, status: "COMPLETE" }
+const waves = [
+  { wave: "BLR-AM-05", feedline: "5", planned: 12400, processed: 10980, status: "AT_RISK" },
+  { wave: "BLR-AM-04", feedline: "4", planned: 11800, processed: 11840, status: "COMPLETE" },
+  { wave: "BLR-AM-03", feedline: "3", planned: 12100, processed: 12160, status: "COMPLETE" }
 ];
 
-const maintenance = [
-  { machine: "4", ticket: "M-8842", opened: "11:23", status: "OPEN", issue: "Bearing failure" },
-  { machine: "7", ticket: "M-8829", opened: "08:15", status: "CLOSED", issue: "Sensor alignment" }
+const jarvisTickets = [
+  { feedline: "5", ticket: "JARVIS-8842", opened: "11:23", status: "OPEN", issue: "Feedline drive fault" },
+  { feedline: "7", ticket: "JARVIS-8829", opened: "08:15", status: "CLOSED", issue: "Scanner alignment" }
 ];
 
-const inventory = [
-  { part: "BR-204", description: "Drive bearing", qty: 0, reorder: 5 },
-  { part: "BLT-90", description: "Timing belt", qty: 11, reorder: 4 },
-  { part: "SNS-14", description: "Position sensor", qty: 7, reorder: 3 }
+const throughput = [
+  { feedline: "5", metric: "Projected shipment loss", value: 1420, unit: "shipments" },
+  { feedline: "4", metric: "Projected shipment loss", value: 0, unit: "shipments" },
+  { feedline: "3", metric: "Projected shipment loss", value: 0, unit: "shipments" }
 ];
 
 export default function ERP() {
   return (
     <div className="erp-shell">
       <div className="erp-window">
-        <div className="erp-title">OMNIPRO Manufacturing ERP v7.4</div>
-        <div className="erp-menu">File &nbsp; Production &nbsp; Maintenance &nbsp; Inventory &nbsp; Reports &nbsp; Help</div>
+        <div className="erp-title">SORTOPS Control Center v7.4</div>
+        <div className="erp-menu">File &nbsp; Waves &nbsp; Feedlines &nbsp; JARVIS &nbsp; Throughput &nbsp; Reports &nbsp; Help</div>
         <div className="erp-body">
           <div className="erp-section">
-            <h3>Production Orders</h3>
+            <h3>Sortation Waves</h3>
             <div className="content">
               <table>
-                <thead><tr><th>Order</th><th>Line</th><th>Qty</th><th>Completed</th><th>Status</th></tr></thead>
+                <thead><tr><th>Wave</th><th>Feedline</th><th>Planned</th><th>Processed</th><th>Status</th></tr></thead>
                 <tbody>
-                  {orders.map((o) => (
-                    <tr key={o.order} data-order={o.order}>
-                      <td>{o.order}</td><td>{o.line}</td><td>{o.qty}</td><td>{o.completed}</td>
-                      <td data-field="status">{o.status}</td>
+                  {waves.map((w) => (
+                    <tr key={w.wave} data-wave={w.wave}>
+                      <td>{w.wave}</td><td>{w.feedline}</td><td>{w.planned}</td><td>{w.processed}</td>
+                      <td data-field="status">{w.status}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -40,14 +40,14 @@ export default function ERP() {
           </div>
 
           <div className="erp-section">
-            <h3>Maintenance Tickets</h3>
+            <h3>JARVIS Equipment Tickets</h3>
             <div className="content">
               <table>
-                <thead><tr><th>Machine</th><th>Ticket</th><th>Opened</th><th>Status</th><th>Issue</th></tr></thead>
+                <thead><tr><th>Feedline</th><th>Ticket</th><th>Opened</th><th>Status</th><th>Issue</th></tr></thead>
                 <tbody>
-                  {maintenance.map((m) => (
-                    <tr key={m.ticket} data-machine={m.machine}>
-                      <td>{m.machine}</td><td data-field="ticket">{m.ticket}</td><td>{m.opened}</td><td>{m.status}</td><td>{m.issue}</td>
+                  {jarvisTickets.map((t) => (
+                    <tr key={t.ticket} data-feedline={t.feedline}>
+                      <td>{t.feedline}</td><td data-field="ticket">{t.ticket}</td><td>{t.opened}</td><td>{t.status}</td><td>{t.issue}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -56,14 +56,14 @@ export default function ERP() {
           </div>
 
           <div className="erp-section">
-            <h3>Inventory</h3>
+            <h3>Throughput Impact</h3>
             <div className="content">
               <table>
-                <thead><tr><th>Part</th><th>Description</th><th>Available</th><th>Reorder point</th></tr></thead>
+                <thead><tr><th>Feedline</th><th>Metric</th><th>Impact</th><th>Unit</th></tr></thead>
                 <tbody>
-                  {inventory.map((i) => (
-                    <tr key={i.part} data-part={i.part}>
-                      <td>{i.part}</td><td>{i.description}</td><td data-field="qty">{i.qty}</td><td>{i.reorder}</td>
+                  {throughput.map((t) => (
+                    <tr key={t.feedline} data-impact-feedline={t.feedline}>
+                      <td>{t.feedline}</td><td>{t.metric}</td><td data-field="impact">{t.value}</td><td>{t.unit}</td>
                     </tr>
                   ))}
                 </tbody>
