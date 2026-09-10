@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { investigateShipment } from "@/lib/shipment-investigation";
+import { saveInvestigation } from "@/lib/investigation-store";
 
 export const runtime = "nodejs";
 
@@ -12,7 +13,8 @@ export async function GET(request: NextRequest) {
 
   try {
     const investigation = await investigateShipment(waybill);
-    return NextResponse.json({ ok: true, investigation });
+    const storedInvestigation = await saveInvestigation(investigation);
+    return NextResponse.json({ ok: true, investigation: storedInvestigation });
   } catch (error) {
     return NextResponse.json(
       { ok: false, error: error instanceof Error ? error.message : "Shipment investigation failed" },
