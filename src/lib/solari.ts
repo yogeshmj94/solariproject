@@ -1,17 +1,16 @@
 import { Solari } from "@solarisdk/browser";
 
 export type VerificationResult = {
-  orderStatus: string;
-  maintenanceTicket: string;
-  partAvailableQty: number;
+  waveStatus: string;
+  jarvisTicket: string;
+  projectedShipmentLoss: number;
   sessionId: string;
   replayUrl?: string;
 };
 
 export async function verifyOperationalBlocker(params: {
-  order: string;
-  machine: string;
-  part: string;
+  wave: string;
+  feedline: string;
 }): Promise<VerificationResult> {
   const apiKey = process.env.SOLARI_API_KEY;
   const baseUrl = process.env.APP_BASE_URL;
@@ -45,31 +44,28 @@ export async function verifyOperationalBlocker(params: {
 
     await page.waitForTimeout(1000);
 
-    console.log("SOLARI URL:", page.url());
-    console.log("SOLARI TITLE:", await page.title());
-
-    const orderStatus = (
+    const waveStatus = (
       await page
-        .locator(`[data-order="${params.order}"] [data-field="status"]`)
+        .locator(`[data-wave="${params.wave}"] [data-field="status"]`)
         .innerText()
     ).trim();
 
-    const maintenanceTicket = (
+    const jarvisTicket = (
       await page
-        .locator(`[data-machine="${params.machine}"] [data-field="ticket"]`)
+        .locator(`[data-feedline="${params.feedline}"] [data-field="ticket"]`)
         .innerText()
     ).trim();
 
-    const qtyText = (
+    const impactText = (
       await page
-        .locator(`[data-part="${params.part}"] [data-field="qty"]`)
+        .locator(`[data-impact-feedline="${params.feedline}"] [data-field="impact"]`)
         .innerText()
     ).trim();
 
     return {
-      orderStatus,
-      maintenanceTicket,
-      partAvailableQty: Number(qtyText),
+      waveStatus,
+      jarvisTicket,
+      projectedShipmentLoss: Number(impactText),
       sessionId,
     };
   } finally {
