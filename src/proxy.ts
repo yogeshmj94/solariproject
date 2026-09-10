@@ -14,6 +14,7 @@ export const proxy = auth((request) => {
 export const config = {
   matcher: [
     "/investigations/:path*",
+    "/admin/:path*",
     "/api/shipments/:path*",
     "/api/feedback/:path*",
   ],
