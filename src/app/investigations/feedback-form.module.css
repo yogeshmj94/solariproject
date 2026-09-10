@@ -1,0 +1,10 @@
+.card { margin-top:14px; }
+.form { display:flex; flex-direction:column; gap:14px; margin-top:14px; }
+.block { display:flex; flex-direction:column; gap:6px; }
+.choices { display:flex; gap:8px; flex-wrap:wrap; }
+.choice { background:#f4f6f8; color:#17202a; border:1px solid #dce1e6; padding:8px 12px; }
+.choiceSelected { background:#18212b; color:#fff; border-color:#18212b; }
+.pilotFields { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+.pilotFields input { width:100%; min-width:0; border:1px solid #cfd6dd; border-radius:10px; padding:11px 12px; font:inherit; outline:none; }
+.submitRow { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+@media(max-width:800px){ .pilotFields { grid-template-columns:1fr; } }
