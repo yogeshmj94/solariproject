@@ -30,6 +30,14 @@ async function passCodespacesGate(page: any) {
   }
 }
 
+function getMockEvidenceImage(waybill: string, state: string) {
+  if (waybill === "771238946" || state === "loaded") {
+    return "/mock-cctv-frame-outbound.svg";
+  }
+
+  return "/mock-cctv-frame.svg";
+}
+
 export async function investigateShipment(waybill: string): Promise<ShipmentInvestigationResult> {
   const apiKey = process.env.SOLARI_API_KEY;
   const baseUrl = process.env.APP_BASE_URL;
@@ -84,7 +92,7 @@ export async function investigateShipment(waybill: string): Promise<ShipmentInve
         area: evidenceArea,
         observation,
         confidence,
-        imageUrl: "/mock-cctv-frame.svg",
+        imageUrl: getMockEvidenceImage(waybill, state),
       },
       sessionId,
     };
