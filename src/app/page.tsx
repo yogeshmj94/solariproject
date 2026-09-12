@@ -5,8 +5,8 @@ export default function Home() {
     <main className={styles.landing}>
       <nav className={styles.nav}>
         <div>
-          <div className="brand">ExecutionOS · Sort Center</div>
-          <div className="muted small">AI-assisted shipment recovery for existing warehouse systems.</div>
+          <div className="brand">Shipment Investigator</div>
+          <div className="muted small">AI-assisted shipment recovery for existing sort-center systems.</div>
         </div>
         <div className={styles.navActions}>
           <a className={styles.secondary} href="/operations">Operations demo</a>
@@ -81,6 +81,7 @@ export default function Home() {
         <div>
           <h2>Try the simulated facility first.</h2>
           <p>Sign in, run both shipment scenarios and tell us what would need to change for your facility.</p>
+          <p className="muted small"><a href="/privacy">Privacy policy</a></p>
         </div>
         <a className={styles.secondary} href="/investigations">Open the demo</a>
       </section>

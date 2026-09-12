@@ -114,7 +114,7 @@ export default function InvestigationsPage() {
     <main>
       <div className="topbar">
         <div>
-          <a className="brand" href="/">ExecutionOS · Sort Center</a>
+          <a className="brand" href="/">Shipment Investigator</a>
           <div className="muted small">Shipment recovery console for sort-center managers.</div>
         </div>
         <div className="demo-badges">

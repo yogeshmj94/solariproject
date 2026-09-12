@@ -7,7 +7,7 @@ export default function SignInPage() {
   return (
     <main className={styles.shell}>
       <section className={styles.card}>
-        <div className="kicker">Sort-center shipment recovery demo</div>
+        <div className="kicker">Shipment Investigator demo</div>
         <h1>Trace a shipment from WMS scan to CCTV evidence.</h1>
         <p className="muted">
           This is a demonstrable prototype using simulated facility data. Sign in with Google to run the demo and leave deployment feedback.
@@ -27,7 +27,10 @@ export default function SignInPage() {
         </div>
 
         <p className="muted small">
-          The demo uses synthetic WMS and CCTV data. Your Google account is used only to identify demo users and associate feedback.
+          The demo uses synthetic WMS and CCTV data. Your Google account is used to identify demo users and associate feedback.
+        </p>
+        <p className="muted small">
+          <a href="/privacy">Read the privacy policy</a>
         </p>
       </section>
     </main>
