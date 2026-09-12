@@ -1,3 +1,5 @@
+import { createSolariSession, extractWaybillFields, releaseSolariSession } from "@/lib/solari-cdp";
+
 export type ShipmentInvestigationResult = {
   caseId: string;
   waybill: string;
@@ -20,31 +22,10 @@ export type ShipmentInvestigationResult = {
   sessionId: string;
 };
 
-async function passCodespacesGate(page: any) {
-  const continueButton = page.locator('button[type="submit"]', { hasText: "Continue" });
-  if (await continueButton.count()) {
-    await continueButton.first().click();
-    await page.waitForLoadState("domcontentloaded");
-  }
-}
-
-async function readText(locator: any) {
-  const value = await locator.textContent();
-  return (value ?? "").trim();
-}
-
-async function closeWithTimeout(task: Promise<unknown>, ms = 5000) {
-  await Promise.race([
-    task.catch(() => undefined),
-    new Promise((resolve) => setTimeout(resolve, ms)),
-  ]);
-}
-
 function getMockEvidenceImage(waybill: string, state: string) {
   if (waybill === "771238946" || state === "loaded") {
     return "/mock-cctv-frame-outbound.svg";
   }
-
   return "/mock-cctv-frame.svg";
 }
 
@@ -55,53 +36,45 @@ export async function investigateShipment(waybill: string): Promise<ShipmentInve
   if (!apiKey) throw new Error("SOLARI_API_KEY is missing in the production environment");
   if (!configuredBaseUrl) throw new Error("APP_BASE_URL is missing in the production environment");
 
-  // Keep the Solari SDK out of module initialization so deployment/runtime import
-  // failures are catchable by the API route instead of producing an empty 500.
-  const { Solari } = await import("@solarisdk/browser");
-
   const baseUrl = configuredBaseUrl.replace(/\/+$/, "");
-  const client = new Solari({ apiKey, baseUrl: "https://api.getsolari.com" });
-  let browser: any;
+  const session = await createSolariSession(apiKey);
 
   try {
-    browser = await client.launch({ recording: true, retries: 2 });
-    const sessionId = browser.id;
+    const wms = await extractWaybillFields(
+      session.cdpEndpoint,
+      `${baseUrl}/wms?waybill=${encodeURIComponent(waybill)}`,
+      waybill,
+      ["facility", "area", "time", "operator", "camera"],
+    );
 
-    const wms = await browser.newPage();
-    await wms.goto(`${baseUrl}/wms?waybill=${encodeURIComponent(waybill)}`, {
-      waitUntil: "domcontentloaded",
-      timeout: 15000,
-    });
-    await passCodespacesGate(wms);
+    const facility = wms.facility;
+    const area = wms.area;
+    const scanTime = wms.time;
+    const operator = wms.operator;
+    const camera = wms.camera;
 
-    const shipment = wms.locator(`[data-waybill="${waybill}"]`);
-    await shipment.waitFor({ state: "attached", timeout: 5000 });
-    if (!(await shipment.count())) throw new Error(`Waybill ${waybill} was not found in WMS`);
+    if (!facility || !area || !scanTime || !operator || !camera) {
+      throw new Error(`Incomplete WMS evidence for waybill ${waybill}`);
+    }
 
-    const facility = await readText(shipment.locator('[data-field="facility"]'));
-    const area = await readText(shipment.locator('[data-field="area"]'));
-    const scanTime = await readText(shipment.locator('[data-field="time"]'));
-    const operator = await readText(shipment.locator('[data-field="operator"]'));
-    const camera = await readText(shipment.locator('[data-field="camera"]'));
-
-    const cctv = await browser.newPage();
     const params = new URLSearchParams({ waybill, camera, time: scanTime });
-    await cctv.goto(`${baseUrl}/cctv?${params.toString()}`, {
-      waitUntil: "domcontentloaded",
-      timeout: 15000,
-    });
-    await passCodespacesGate(cctv);
+    const evidence = await extractWaybillFields(
+      session.cdpEndpoint,
+      `${baseUrl}/cctv?${params.toString()}`,
+      waybill,
+      ["camera", "time", "area", "observation", "confidence", "state"],
+    );
 
-    const evidence = cctv.locator(`[data-waybill="${waybill}"]`);
-    await evidence.waitFor({ state: "attached", timeout: 5000 });
-    if (!(await evidence.count())) throw new Error(`No CCTV evidence found for ${waybill}`);
+    const evidenceCamera = evidence.camera;
+    const evidenceTime = evidence.time;
+    const evidenceArea = evidence.area;
+    const observation = evidence.observation;
+    const confidence = Number(evidence.confidence);
+    const state = evidence.state;
 
-    const evidenceCamera = await readText(evidence.locator('[data-field="camera"]'));
-    const evidenceTime = await readText(evidence.locator('[data-field="time"]'));
-    const evidenceArea = await readText(evidence.locator('[data-field="area"]'));
-    const observation = await readText(evidence.locator('[data-field="observation"]'));
-    const confidence = Number(await readText(evidence.locator('[data-field="confidence"]')));
-    const state = await readText(evidence.locator('[data-field="state"]'));
+    if (!evidenceCamera || !evidenceTime || !evidenceArea || !observation || !state || Number.isNaN(confidence)) {
+      throw new Error(`Incomplete CCTV evidence for waybill ${waybill}`);
+    }
 
     const status = state === "inside"
       ? "AVAILABLE_INSIDE_FACILITY"
@@ -123,10 +96,9 @@ export async function investigateShipment(waybill: string): Promise<ShipmentInve
         confidence,
         imageUrl: getMockEvidenceImage(waybill, state),
       },
-      sessionId,
+      sessionId: session.id,
     };
   } finally {
-    if (browser) await closeWithTimeout(browser.close());
-    await closeWithTimeout(client.close());
+    await releaseSolariSession(apiKey, session.id);
   }
 }
