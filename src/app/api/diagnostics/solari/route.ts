@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Solari } from "@solarisdk/browser";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -32,12 +31,18 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ ok: false, error: "missing production env" }, { status: 500 });
   }
 
-  const baseUrl = configuredBaseUrl.replace(/\/+$/, "");
-  const client = new Solari({ apiKey, baseUrl: "https://api.getsolari.com" });
-  let browser: Awaited<ReturnType<typeof client.launch>> | undefined;
   const timings: Array<{ label: string; ms: number }> = [];
+  let client: any;
+  let browser: any;
 
   try {
+    const imported = await timed("import", () => import("@solarisdk/browser"));
+    timings.push({ label: imported.label, ms: imported.ms });
+    const { Solari } = imported.value;
+
+    const baseUrl = configuredBaseUrl.replace(/\/+$/, "");
+    client = new Solari({ apiKey, baseUrl: "https://api.getsolari.com" });
+
     const launched = await timed("launch", () => client.launch({ retries: 0 }));
     browser = launched.value;
     timings.push({ label: launched.label, ms: launched.ms });
@@ -78,11 +83,12 @@ export async function GET(request: NextRequest) {
         step,
         timings,
         error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack?.split("\n").slice(0, 5) : undefined,
       },
       { status: 500 },
     );
   } finally {
     if (browser) await closeWithTimeout(browser.close());
-    await closeWithTimeout(client.close());
+    if (client) await closeWithTimeout(client.close());
   }
 }
