@@ -2,8 +2,8 @@ import "./globals.css";
 import type { ReactNode } from "react";
 
 export const metadata = {
-  title: "ExecutionOS",
-  description: "AI-native performance execution for operations-heavy companies"
+  title: "Shipment Investigator",
+  description: "Find lost and missorted shipments across WMS and CCTV evidence.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

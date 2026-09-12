@@ -3,18 +3,17 @@ import { verifyOperationalBlocker } from "@/lib/solari";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const order = searchParams.get("order") ?? "1421";
-  const machine = searchParams.get("machine") ?? "4";
-  const part = searchParams.get("part") ?? "BR-204";
+  const wave = searchParams.get("wave") ?? "BLR-AM-05";
+  const feedline = searchParams.get("feedline") ?? "5";
 
   try {
-    const result = await verifyOperationalBlocker({ order, machine, part });
+    const result = await verifyOperationalBlocker({ wave, feedline });
     return NextResponse.json({
       verified: true,
       facts: {
-        orderStatus: result.orderStatus,
-        maintenanceTicket: result.maintenanceTicket,
-        partAvailableQty: result.partAvailableQty
+        waveStatus: result.waveStatus,
+        jarvisTicket: result.jarvisTicket,
+        projectedShipmentLoss: result.projectedShipmentLoss
       },
       sessionId: result.sessionId,
       replayUrl: result.replayUrl ?? null

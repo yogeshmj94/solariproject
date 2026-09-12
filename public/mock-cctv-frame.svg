@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 500" role="img" aria-labelledby="title desc">
+  <title id="title">Mock CCTV shipment evidence</title>
+  <desc id="desc">Schematic sort center dock with a highlighted parcel near an exception cage.</desc>
+  <rect width="900" height="500" fill="#182028"/>
+  <rect x="40" y="70" width="820" height="380" rx="10" fill="#26323c" stroke="#6f7c86" stroke-width="3"/>
+  <path d="M40 335H860M280 70V450M610 70V450" stroke="#52616d" stroke-width="3"/>
+  <rect x="650" y="105" width="160" height="190" fill="#303e48" stroke="#91a0aa" stroke-width="4"/>
+  <text x="674" y="140" fill="#e8eef2" font-family="sans-serif" font-size="24">EXCEPTION</text>
+  <text x="705" y="170" fill="#e8eef2" font-family="sans-serif" font-size="24">CAGE E2</text>
+  <rect x="560" y="315" width="115" height="75" fill="#a78050" stroke="#ffcf4a" stroke-width="6"/>
+  <rect x="548" y="302" width="140" height="102" fill="none" stroke="#ffcf4a" stroke-width="4" stroke-dasharray="10 8"/>
+  <path d="M548 285L495 238" stroke="#ffcf4a" stroke-width="4"/>
+  <rect x="335" y="190" width="180" height="62" rx="8" fill="#11181e" opacity=".9"/>
+  <text x="355" y="218" fill="#ffcf4a" font-family="sans-serif" font-size="20">TARGET LOCKED</text>
+  <text x="355" y="243" fill="#ffffff" font-family="sans-serif" font-size="17">AWB 771238945</text>
+  <text x="58" y="105" fill="#ffffff" font-family="monospace" font-size="18">CAM-E12  2026-09-10 07:41:18</text>
+  <text x="58" y="430" fill="#d7e0e5" font-family="sans-serif" font-size="20">Dock 12 · Exception Cage E2 · schematic evidence frame</text>
+</svg>

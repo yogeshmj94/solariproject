@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum ExpectationStatus {
@@ -78,26 +79,73 @@ model ExecutionUpdate {
 }
 
 model Evidence {
-  id              String          @id @default(cuid())
+  id                String          @id @default(cuid())
   executionUpdateId String
-  executionUpdate ExecutionUpdate @relation(fields: [executionUpdateId], references: [id])
-  source          String
-  fact            String
-  confidence      Float
-  sourceUrl       String?
-  sessionId       String?
-  replayUrl       String?
-  rawPayload      Json?
-  createdAt       DateTime        @default(now())
+  executionUpdate   ExecutionUpdate @relation(fields: [executionUpdateId], references: [id])
+  source            String
+  fact              String
+  confidence        Float
+  sourceUrl         String?
+  sessionId         String?
+  replayUrl         String?
+  rawPayload        Json?
+  createdAt         DateTime        @default(now())
 }
 
 model Escalation {
-  id          String   @id @default(cuid())
-  title       String
-  severity    String
-  ownerId     String
-  rationale   String
+  id             String   @id @default(cuid())
+  title          String
+  severity       String
+  ownerId        String
+  rationale      String
   proposedAction Json?
-  status      String   @default("OPEN")
-  createdAt   DateTime @default(now())
+  status         String   @default("OPEN")
+  createdAt      DateTime @default(now())
+}
+
+model DemoUser {
+  id             String              @id @default(cuid())
+  email          String              @unique
+  name           String?
+  image          String?
+  lastLoginAt    DateTime            @default(now())
+  createdAt      DateTime            @default(now())
+  investigations InvestigationCase[]
+  feedback       ProductFeedback[]
+}
+
+model InvestigationCase {
+  id             String    @id
+  waybill        String
+  status         String
+  facility       String
+  lastScan       Json
+  visualEvidence Json
+  sessionId      String
+  createdAt      DateTime  @default(now())
+  userId         String?
+  user           DemoUser? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([waybill])
+  @@index([userId])
+}
+
+model ProductFeedback {
+  id              String   @id @default(cuid())
+  usefulness      String
+  systems         String[]
+  obstacle        String?
+  comments        String?
+  pilotInterest   String
+  company         String?
+  facility        String?
+  workEmail       String?
+  investigationId String?
+  createdAt       DateTime @default(now())
+  userId          String
+  user            DemoUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([userId])
 }
