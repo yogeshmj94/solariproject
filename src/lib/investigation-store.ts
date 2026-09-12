@@ -1,4 +1,5 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import type { Prisma } from "@prisma/client";
 import type { ShipmentInvestigationResult } from "@/lib/shipment-investigation";
@@ -8,7 +9,9 @@ export type StoredInvestigation = ShipmentInvestigationResult & {
   createdAt: string;
 };
 
-const runtimeDir = path.join(process.cwd(), ".runtime-data");
+const runtimeDir = process.env.VERCEL
+  ? path.join(os.tmpdir(), "shipment-investigator-runtime")
+  : path.join(process.cwd(), ".runtime-data");
 const storePath = path.join(runtimeDir, "investigations.json");
 const MAX_CASES = 50;
 
@@ -88,6 +91,10 @@ export async function saveInvestigation(
     });
 
     return fromDb(row);
+  }
+
+  if (process.env.VERCEL) {
+    console.warn("DATABASE_URL is not configured; using ephemeral /tmp investigation storage");
   }
 
   const stored: StoredInvestigation = {
