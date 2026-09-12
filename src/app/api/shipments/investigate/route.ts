@@ -4,6 +4,17 @@ import { investigateShipment } from "@/lib/shipment-investigation";
 import { saveInvestigation } from "@/lib/investigation-store";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
+
+function getErrorMessage(error: unknown) {
+  if (!(error instanceof Error)) return "Shipment investigation failed";
+
+  if (error.message === "Unexpected end of JSON input") {
+    return "Solari browser session could not be created. Please retry in a moment.";
+  }
+
+  return error.message;
+}
 
 export async function GET(request: NextRequest) {
   const session = await auth();
@@ -22,8 +33,9 @@ export async function GET(request: NextRequest) {
     const storedInvestigation = await saveInvestigation(investigation, session.user.email);
     return NextResponse.json({ ok: true, investigation: storedInvestigation });
   } catch (error) {
+    console.error("Shipment investigation failed", error);
     return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : "Shipment investigation failed" },
+      { ok: false, error: getErrorMessage(error) },
       { status: 500 },
     );
   }
