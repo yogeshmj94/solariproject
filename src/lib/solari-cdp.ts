@@ -213,14 +213,18 @@ export async function extractWaybillFields(
     const fieldsJson = JSON.stringify(fieldNames);
 
     while (Date.now() < deadline) {
-      const expression = [
-        "(() => {",
-        `const root = document.querySelector(${selectorJson});`,
-        "if (!root) return null;",
-        `const names = ${fieldsJson};`,
-        'return Object.fromEntries(names.map((name) => [name, (root.querySelector(\'[data-field="\' + name + '\'"]\')?.textContent ?? "").trim()]));',
-        "})()",
-      ].join("\n");
+      const expression = `(() => {
+        const root = document.querySelector(${selectorJson});
+        if (!root) return null;
+        const names = ${fieldsJson};
+        return Object.fromEntries(
+          names.map((name) => {
+            const fieldSelector = '[data-field="' + name + '"]';
+            const text = root.querySelector(fieldSelector)?.textContent ?? "";
+            return [name, text.trim()];
+          }),
+        );
+      })()`;
 
       const evaluated = await cdp.send(
         "Runtime.evaluate",
