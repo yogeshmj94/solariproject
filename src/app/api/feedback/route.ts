@@ -1,4 +1,5 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -20,7 +21,9 @@ const feedbackSchema = z.object({
 });
 
 async function saveLocal(payload: unknown, email: string) {
-  const dir = path.join(process.cwd(), ".runtime-data");
+  const dir = process.env.VERCEL
+    ? path.join(os.tmpdir(), "shipment-investigator-runtime")
+    : path.join(process.cwd(), ".runtime-data");
   const file = path.join(dir, "feedback.json");
   await mkdir(dir, { recursive: true });
 
@@ -45,6 +48,9 @@ export async function POST(request: NextRequest) {
     const payload = feedbackSchema.parse(await request.json());
 
     if (!process.env.DATABASE_URL) {
+      if (process.env.VERCEL) {
+        console.warn("DATABASE_URL is not configured; using ephemeral /tmp feedback storage");
+      }
       await saveLocal(payload, session.user.email);
       return NextResponse.json({ ok: true });
     }
