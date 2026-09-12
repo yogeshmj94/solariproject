@@ -28,7 +28,12 @@ export async function GET(request: NextRequest) {
   const configuredBaseUrl = process.env.APP_BASE_URL;
 
   if (!apiKey || !configuredBaseUrl) {
-    return NextResponse.json({ ok: false, error: "missing production env" }, { status: 500 });
+    const missing = [
+      !apiKey ? "SOLARI_API_KEY" : null,
+      !configuredBaseUrl ? "APP_BASE_URL" : null,
+    ].filter(Boolean);
+
+    return NextResponse.json({ ok: false, error: "missing production env", missing }, { status: 500 });
   }
 
   const timings: Array<{ label: string; ms: number }> = [];
