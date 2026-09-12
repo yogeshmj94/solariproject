@@ -1,5 +1,3 @@
-import { Solari } from "@solarisdk/browser";
-
 export type ShipmentInvestigationResult = {
   caseId: string;
   waybill: string;
@@ -26,8 +24,20 @@ async function passCodespacesGate(page: any) {
   const continueButton = page.locator('button[type="submit"]', { hasText: "Continue" });
   if (await continueButton.count()) {
     await continueButton.first().click();
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("domcontentloaded");
   }
+}
+
+async function readText(locator: any) {
+  const value = await locator.textContent();
+  return (value ?? "").trim();
+}
+
+async function closeWithTimeout(task: Promise<unknown>, ms = 5000) {
+  await Promise.race([
+    task.catch(() => undefined),
+    new Promise((resolve) => setTimeout(resolve, ms)),
+  ]);
 }
 
 function getMockEvidenceImage(waybill: string, state: string) {
@@ -42,75 +52,81 @@ export async function investigateShipment(waybill: string): Promise<ShipmentInve
   const apiKey = process.env.SOLARI_API_KEY;
   const configuredBaseUrl = process.env.APP_BASE_URL;
 
-  if (!apiKey) throw new Error("SOLARI_API_KEY is missing");
-  if (!configuredBaseUrl) throw new Error("APP_BASE_URL is missing");
+  if (!apiKey) throw new Error("SOLARI_API_KEY is missing in the production environment");
+  if (!configuredBaseUrl) throw new Error("APP_BASE_URL is missing in the production environment");
+
+  // Keep the Solari SDK out of module initialization so deployment/runtime import
+  // failures are catchable by the API route instead of producing an empty 500.
+  const { Solari } = await import("@solarisdk/browser");
 
   const baseUrl = configuredBaseUrl.replace(/\/+$/, "");
   const client = new Solari({ apiKey, baseUrl: "https://api.getsolari.com" });
+  let browser: any;
 
   try {
-    const browser = await client.launch({ recording: true, retries: 2 });
+    browser = await client.launch({ recording: true, retries: 2 });
     const sessionId = browser.id;
 
-    try {
-      const wms = await browser.newPage();
-      await wms.goto(`${baseUrl}/wms?waybill=${encodeURIComponent(waybill)}`, { waitUntil: "networkidle" });
-      await passCodespacesGate(wms);
+    const wms = await browser.newPage();
+    await wms.goto(`${baseUrl}/wms?waybill=${encodeURIComponent(waybill)}`, {
+      waitUntil: "domcontentloaded",
+      timeout: 15000,
+    });
+    await passCodespacesGate(wms);
 
-      const shipment = wms.locator(`[data-waybill="${waybill}"]`);
-      if (!(await shipment.count())) throw new Error(`Waybill ${waybill} was not found in WMS`);
+    const shipment = wms.locator(`[data-waybill="${waybill}"]`);
+    await shipment.waitFor({ state: "attached", timeout: 5000 });
+    if (!(await shipment.count())) throw new Error(`Waybill ${waybill} was not found in WMS`);
 
-      const facility = (await shipment.locator('[data-field="facility"]').innerText()).trim();
-      const area = (await shipment.locator('[data-field="area"]').innerText()).trim();
-      const scanTime = (await shipment.locator('[data-field="time"]').innerText()).trim();
-      const operator = (await shipment.locator('[data-field="operator"]').innerText()).trim();
-      const camera = (await shipment.locator('[data-field="camera"]').innerText()).trim();
+    const facility = await readText(shipment.locator('[data-field="facility"]'));
+    const area = await readText(shipment.locator('[data-field="area"]'));
+    const scanTime = await readText(shipment.locator('[data-field="time"]'));
+    const operator = await readText(shipment.locator('[data-field="operator"]'));
+    const camera = await readText(shipment.locator('[data-field="camera"]'));
 
-      const cctv = await browser.newPage();
-      const params = new URLSearchParams({ waybill, camera, time: scanTime });
-      await cctv.goto(`${baseUrl}/cctv?${params.toString()}`, { waitUntil: "networkidle" });
-      await passCodespacesGate(cctv);
+    const cctv = await browser.newPage();
+    const params = new URLSearchParams({ waybill, camera, time: scanTime });
+    await cctv.goto(`${baseUrl}/cctv?${params.toString()}`, {
+      waitUntil: "domcontentloaded",
+      timeout: 15000,
+    });
+    await passCodespacesGate(cctv);
 
-      const evidence = cctv.locator(`[data-waybill="${waybill}"]`);
-      if (!(await evidence.count())) throw new Error(`No CCTV evidence found for ${waybill}`);
+    const evidence = cctv.locator(`[data-waybill="${waybill}"]`);
+    await evidence.waitFor({ state: "attached", timeout: 5000 });
+    if (!(await evidence.count())) throw new Error(`No CCTV evidence found for ${waybill}`);
 
-      const evidenceCamera = (await evidence.locator('[data-field="camera"]').innerText()).trim();
-      const evidenceTime = (await evidence.locator('[data-field="time"]').innerText()).trim();
-      const evidenceArea = (await evidence.locator('[data-field="area"]').innerText()).trim();
-      const observation = (await evidence.locator('[data-field="observation"]').innerText()).trim();
-      const confidence = Number((await evidence.locator('[data-field="confidence"]').innerText()).trim());
-      const state = (await evidence.locator('[data-field="state"]').innerText()).trim();
+    const evidenceCamera = await readText(evidence.locator('[data-field="camera"]'));
+    const evidenceTime = await readText(evidence.locator('[data-field="time"]'));
+    const evidenceArea = await readText(evidence.locator('[data-field="area"]'));
+    const observation = await readText(evidence.locator('[data-field="observation"]'));
+    const confidence = Number(await readText(evidence.locator('[data-field="confidence"]')));
+    const state = await readText(evidence.locator('[data-field="state"]'));
 
-      const status = state === "inside" ? "AVAILABLE_INSIDE_FACILITY" : state === "loaded" ? "LEFT_FACILITY" : "LAST_SEEN";
+    const status = state === "inside"
+      ? "AVAILABLE_INSIDE_FACILITY"
+      : state === "loaded"
+        ? "LEFT_FACILITY"
+        : "LAST_SEEN";
 
-      return {
-        caseId: `CASE-${Date.now()}`,
-        waybill,
-        status,
-        facility,
-        lastScan: { area, time: scanTime, operator, camera },
-        visualEvidence: {
-          camera: evidenceCamera,
-          time: evidenceTime,
-          area: evidenceArea,
-          observation,
-          confidence,
-          imageUrl: getMockEvidenceImage(waybill, state),
-        },
-        sessionId,
-      };
-    } finally {
-      try {
-        await browser.close();
-      } catch (error) {
-        console.error("Failed to close Solari browser session", error);
-      }
-    }
+    return {
+      caseId: `CASE-${Date.now()}`,
+      waybill,
+      status,
+      facility,
+      lastScan: { area, time: scanTime, operator, camera },
+      visualEvidence: {
+        camera: evidenceCamera,
+        time: evidenceTime,
+        area: evidenceArea,
+        observation,
+        confidence,
+        imageUrl: getMockEvidenceImage(waybill, state),
+      },
+      sessionId,
+    };
   } finally {
-    try {
-      await client.close();
-    } catch (error) {
-      console.error("Failed to close Solari client", error);
-    }
+    if (browser) await closeWithTimeout(browser.close());
+    await closeWithTimeout(client.close());
   }
 }
